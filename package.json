@@ -4,36 +4,25 @@
   "description": "javascript helpers",
   "main": "index.js",
   "scripts": {
-    "build-ts": "tsc",
-    "watch-ts": "tsc -w",
-    "test": "jest --forceExit"
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest --forceExit src"
   },
   "author": "p10y",
   "license": "MIT",
   "dependencies": {
-    "isomorphic-fetch": "^2.2.1",
-    "lodash": "^4.17.10"
+    "abort-controller": "^3.0.0",
+    "lodash": "^4.17.10",
+    "node-fetch": "^2.6.0",
+    "whatwg-fetch": "^3.0.0"
   },
   "devDependencies": {
-    "@types/isomorphic-fetch": "0.0.34",
+    "@types/jest": "^24.0.15",
     "@types/lodash": "^4.14.114",
-    "ts-jest": "^20.0.6",
-    "tslint": "^5.4.3",
-    "typescript": "^2.4.1"
-  },
-  "jest": {
-    "globals": {
-      "__TS_CONFIG__": "tsconfig.json"
-    },
-    "moduleFileExtensions": [
-      "ts",
-      "js"
-    ],
-    "transform": {
-      "^.+\\.(ts|tsx)$": "./node_modules/ts-jest/preprocessor.js"
-    },
-    "testMatch": [
-      "**/test/**/*.test.(ts|js)"
-    ]
+    "@types/node": "^12.0.7",
+    "jest": "^24.8.0",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.17.0",
+    "typescript": "^3.5.1"
   }
 }
