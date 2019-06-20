@@ -2,7 +2,10 @@
   "name": "fermionjs",
   "version": "2.2.2",
   "description": "javascript helpers",
-  "main": "index.js",
+  "main": "lib",
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
