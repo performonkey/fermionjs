@@ -13,15 +13,15 @@ interface QueueItem {
   path: (string | number)[];
 }
 
-interface transformQueueItem {
+interface TransformQueueItem {
   path: (string | number)[];
   transform: <V, O>(value: V, obj: O) => V | void;
 }
 
 interface Queue {
   typeQueue: QueueItem[];
-  renameQueue: transformQueueItem[];
-  transformQueue: transformQueueItem[];
+  renameQueue: TransformQueueItem[];
+  transformQueue: TransformQueueItem[];
 }
 
 type ArrayTask = Omit<QueueItem, 'schema'> & { schema: any[] };
@@ -47,7 +47,7 @@ function viewPath<T>(valuePath: (string | number)[], obj: T): any {
 }
 
 function arrayParser(current: ArrayTask, queue: Queue) {
-  if (!Array.isArray(current.value)) return [];
+  if (!Array.isArray(current.value)) return;
 
   if (current.schema.length > 1) {
     current.value.forEach((v, i) => {
@@ -116,10 +116,12 @@ function objectParser(current: ObjectTask, queue: Queue) {
     }
   } else {
     Object.keys(current.schema).forEach(k => {
+      const value = current.value[k];
+      if (!value === undefined) return;
       queue.typeQueue.push({
+        value,
         path: current.path.concat(k),
         schema: current.schema[k],
-        value: current.value[k],
       });
     });
   }
@@ -138,32 +140,30 @@ export default function reformat(s: SchemaTypes, obj: any) {
     transformQueue: [],
   };
 
-  do {
+  while (queue.typeQueue.length > 0) {
     const current = queue.typeQueue.pop();
-    if (!current) break;
+    if (!current || current.value === undefined) continue;
 
     let value = current.value;
     switch (current.schema) {
       case Number:
-        value = current.value ? Number(current.value) : 0;
+        value = Number(current.value);
         if (Number.isNaN(value)) value = 0;
         break;
       case String:
-        value = current.value ? String(current.value) : '';
+        value = String(current.value);
         break;
       case Boolean:
         value = Boolean(current.value);
         break;
       case Date:
-        value = current.value !== undefined ? new Date(current.value) : null;
+        value = new Date(current.value);
         break;
       case RegExp:
-        value = current.value !== undefined ? new RegExp(current.value) : null;
+        value = new RegExp(current.value);
         break;
       case Array:
         value = Array.isArray(current.value) ? current.value : [];
-        break;
-      case undefined:
         break;
       default:
         switch (Object.prototype.toString.call(current.schema)) {
@@ -185,7 +185,7 @@ export default function reformat(s: SchemaTypes, obj: any) {
     } else {
       assocPath(current.path, value, obj);
     }
-  } while (queue.typeQueue.length > 0);
+  }
 
   while (queue.transformQueue.length > 0) {
     const current = queue.transformQueue.pop();

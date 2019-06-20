@@ -151,3 +151,27 @@ test('should apply TRANSFORM correct', () => {
     a: 'hello',
   });
 });
+
+test('must skip undefined value', () => {
+  expect(
+    reformat(
+      {
+        a: {
+          [TYPE]: [Number],
+          [RENAME]: 'xyz',
+        },
+        b: {
+          [TYPE]: [Number],
+          [RENAME]: 'xyz',
+        },
+      },
+      {
+        a: ['132'],
+        c: 1,
+      }
+    )
+  ).toEqual({
+    xyz: [132],
+    c: 1,
+  });
+});
