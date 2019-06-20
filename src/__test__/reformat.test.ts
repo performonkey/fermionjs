@@ -85,6 +85,33 @@ test('should apply RENAME correct', () => {
   });
 });
 
+test('should apply nested RENAME correct', () => {
+  expect(
+    reformat(
+      {
+        a: {
+          [RENAME]: 'abc',
+          [TYPE]: {
+            b: {
+              [RENAME]: 'xyz',
+              [TYPE]: Number,
+            },
+          },
+        },
+      },
+      {
+        a: {
+          b: '123',
+        },
+      }
+    )
+  ).toEqual({
+    abc: {
+      xyz: 123,
+    },
+  });
+});
+
 test('should apply VALUES correct', () => {
   expect(
     reformat(

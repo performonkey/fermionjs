@@ -8,10 +8,20 @@ const ACTIONS = [TYPE, RENAME, TRANSFORM, VALUES];
 type SchemaTypes = string | number | boolean | Date | RegExp | Array<any> | { [s: string]: any };
 
 interface QueueItem {
-  schema?: SchemaTypes;
+  schema: SchemaTypes;
   value: any;
   path: (string | number)[];
-  transform?: <V, O>(value: V, obj: O) => V | void;
+}
+
+interface transformQueueItem {
+  path: (string | number)[];
+  transform: <V, O>(value: V, obj: O) => V | void;
+}
+
+interface Queue {
+  typeQueue: QueueItem[];
+  renameQueue: transformQueueItem[];
+  transformQueue: transformQueueItem[];
 }
 
 type ArrayTask = Omit<QueueItem, 'schema'> & { schema: any[] };
@@ -36,39 +46,36 @@ function viewPath<T>(valuePath: (string | number)[], obj: T): any {
   return valuePath.reduce((o, p) => o[p], obj);
 }
 
-function arrayParser(current: ArrayTask, queue: QueueItem[]) {
+function arrayParser(current: ArrayTask, queue: Queue) {
   if (!Array.isArray(current.value)) return [];
 
   if (current.schema.length > 1) {
     current.value.forEach((v, i) => {
-      const cs = current.schema[i];
-      queue.push({
-        schema: cs,
-        value: v,
+      queue.typeQueue.push({
         path: current.path.concat(i),
-        transform: cs ? cs[TRANSFORM] : undefined,
+        schema: current.schema[i],
+        value: v,
       });
     });
   } else {
     const cs = current.schema[0];
     current.value.forEach((v, i) => {
-      queue.push({
+      queue.typeQueue.push({
+        path: current.path.concat(i),
         schema: cs,
         value: v,
-        path: current.path.concat(i),
-        transform: cs[TRANSFORM],
       });
     });
   }
 }
 
-function objectParser(current: ObjectTask, queue: QueueItem[]) {
+function objectParser(current: ObjectTask, queue: Queue) {
   // have reformat actions
   if (ACTIONS.find(x => current.schema[x])) {
     if (current.schema[VALUES]) {
       const schema = current.schema[VALUES];
       Object.keys(current.value).forEach(k => {
-        queue.unshift({
+        queue.typeQueue.unshift({
           schema,
           path: current.path.concat(k),
           value: current.value[k],
@@ -80,9 +87,8 @@ function objectParser(current: ObjectTask, queue: QueueItem[]) {
        * delay to parse value type finish
        */
       const transformFunc = current.schema[TRANSFORM];
-      queue.unshift({
+      queue.transformQueue.push({
         ...current,
-        schema: undefined,
         transform(_v: {}, obj: {}) {
           const value = viewPath(current.path, obj);
           return transformFunc(value, obj);
@@ -90,9 +96,8 @@ function objectParser(current: ObjectTask, queue: QueueItem[]) {
       });
     }
     if (current.schema[RENAME]) {
-      queue.unshift({
+      queue.renameQueue.push({
         ...current,
-        schema: undefined,
         transform(_v, obj: {}) {
           const lastField = current.path.slice(-1)[0];
           const parentFieldsPath = current.path.slice(0, -1);
@@ -104,14 +109,14 @@ function objectParser(current: ObjectTask, queue: QueueItem[]) {
       });
     }
     if (current.schema[TYPE]) {
-      queue.push({
+      queue.typeQueue.push({
         ...current,
         schema: current.schema[TYPE],
       });
     }
   } else {
     Object.keys(current.schema).forEach(k => {
-      queue.push({
+      queue.typeQueue.push({
         path: current.path.concat(k),
         schema: current.schema[k],
         value: current.value[k],
@@ -121,17 +126,20 @@ function objectParser(current: ObjectTask, queue: QueueItem[]) {
 }
 
 export default function reformat(s: SchemaTypes, obj: any) {
-  const queue: QueueItem[] = [
-    {
-      schema: s,
-      value: obj,
-      path: [],
-      transform: (x: any) => x,
-    },
-  ];
+  const queue: Queue = {
+    typeQueue: [
+      {
+        schema: s,
+        value: obj,
+        path: [],
+      },
+    ],
+    renameQueue: [],
+    transformQueue: [],
+  };
 
   do {
-    const current = queue.pop();
+    const current = queue.typeQueue.pop();
     if (!current) break;
 
     let value = current.value;
@@ -170,10 +178,6 @@ export default function reformat(s: SchemaTypes, obj: any) {
         }
     }
 
-    if (current.transform) {
-      value = current.transform(value, obj);
-    }
-
     if (value === undefined) continue;
 
     if (typeof obj !== 'object' && current.path.length === 0) {
@@ -181,7 +185,25 @@ export default function reformat(s: SchemaTypes, obj: any) {
     } else {
       assocPath(current.path, value, obj);
     }
-  } while (queue.length > 0);
+  } while (queue.typeQueue.length > 0);
+
+  while (queue.transformQueue.length > 0) {
+    const current = queue.transformQueue.pop();
+    if (!current || !current.transform) continue;
+
+    let value = viewPath(current.path, obj);
+    value = current.transform(value, obj);
+    assocPath(current.path, value, obj);
+  }
+
+  while (queue.renameQueue.length > 0) {
+    const current = queue.renameQueue.pop();
+    if (!current || !current.transform) continue;
+
+    let value = viewPath(current.path, obj);
+    value = current.transform(value, obj);
+    assocPath(current.path, value, obj);
+  }
 
   return obj;
 }
