@@ -113,7 +113,7 @@ async function defaultCheckStatus(resp: Response): Promise<Response> {
 
   let respContent;
   try {
-    respContent = parseJSON(resp);
+    respContent = await parseJSON(resp);
   } catch (error) {
     respContent = error.response;
   }
