@@ -1,6 +1,6 @@
 {
   "name": "fermionjs",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "description": "javascript helpers",
   "main": "lib",
   "files": [
