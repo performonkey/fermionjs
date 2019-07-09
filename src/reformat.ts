@@ -27,23 +27,32 @@ interface Queue {
 type ArrayTask = Omit<QueueItem, 'schema'> & { schema: any[] };
 type ObjectTask = Omit<QueueItem, 'schema'> & { schema: {} };
 
-function assocPath<V, T>(valuePath: (string | number)[], value: V, obj: T): T | V {
+export function assocPath<V, T>(valuePath: (string | number)[], value: V, obj: T): T | V {
   if (valuePath.length === 0) {
     return value;
   }
 
-  valuePath.reduce((o, p, i) => {
+  let temp = obj;
+  for (let i = 0; i < valuePath.length; i++) {
+    const p = valuePath[i];
+
     if (i === valuePath.length - 1) {
-      o[p] = value;
+      temp[p] = value;
+    } else if (typeof temp !== 'object' || !temp[p]) {
+      break;
     }
-    return o[p];
-  }, obj);
+
+    temp = temp[p];
+  }
 
   return obj;
 }
 
 function viewPath<T>(valuePath: (string | number)[], obj: T): any {
-  return valuePath.reduce((o, p) => o[p], obj);
+  return valuePath.reduce((o, p) => {
+    if (typeof o !== 'object' || !o[p]) return undefined;
+    return o[p];
+  }, obj);
 }
 
 function arrayParser(current: ArrayTask, queue: Queue) {
@@ -103,6 +112,9 @@ function objectParser(current: ObjectTask, queue: Queue) {
           const parentFieldsPath = current.path.slice(0, -1);
           const parentValue = viewPath(parentFieldsPath, obj);
           const currentValue = viewPath(current.path, obj);
+
+          if (!parentValue) return;
+
           parentValue[current.schema[RENAME]] = currentValue;
           delete parentValue[lastField];
         },
