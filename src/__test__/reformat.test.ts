@@ -1,4 +1,4 @@
-import reformat, { TYPE, RENAME, VALUES, TRANSFORM, assocPath } from '../reformat';
+import reformat, { TYPE, RENAME, VALUES, TRANSFORM, assocPath, viewPath } from '../reformat';
 
 describe('reformat', () => {
   test('should format number correct', () => {
@@ -211,5 +211,17 @@ describe('assocPath', () => {
       a: null,
       z: 10,
     });
+  });
+});
+
+describe('viewPath', () => {
+  test('must get non undefined value correct', () => {
+    expect(
+      viewPath(['a', 'b'], {
+        a: {
+          b: '',
+        },
+      })
+    ).toBe('');
   });
 });

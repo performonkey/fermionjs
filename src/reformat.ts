@@ -48,9 +48,9 @@ export function assocPath<V, T>(valuePath: (string | number)[], value: V, obj: T
   return obj;
 }
 
-function viewPath<T>(valuePath: (string | number)[], obj: T): any {
+export function viewPath<T>(valuePath: (string | number)[], obj: T): any {
   return valuePath.reduce((o, p) => {
-    if (typeof o !== 'object' || !o[p]) return undefined;
+    if (!o || typeof o !== 'object' || o[p] === undefined) return undefined;
     return o[p];
   }, obj);
 }
