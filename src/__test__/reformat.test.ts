@@ -215,7 +215,7 @@ describe('assocPath', () => {
 });
 
 describe('viewPath', () => {
-  test('must get non undefined value correct', () => {
+  test('must get non-undefined value correct', () => {
     expect(
       viewPath(['a', 'b'], {
         a: {
@@ -223,5 +223,28 @@ describe('viewPath', () => {
         },
       })
     ).toBe('');
+
+    expect(
+      reformat(
+        {
+          a: {
+            [TYPE]: {
+              b: {
+                [RENAME]: 'x',
+              },
+            },
+          },
+        },
+        {
+          a: {
+            b: '',
+          },
+        }
+      )
+    ).toEqual({
+      a: {
+        x: '',
+      },
+    });
   });
 });
