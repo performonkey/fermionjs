@@ -176,6 +176,18 @@ describe('reformat', () => {
       c: 1,
     });
   });
+
+  test('should TRANSFORM root correct', () => {
+    expect(
+      reformat(
+        {
+          [TYPE]: [Number],
+          [TRANSFORM]: () => [1, 2, 3],
+        },
+        [9, 8, 7]
+      )
+    ).toEqual([1, 2, 3]);
+  });
 });
 
 describe('assocPath', () => {

@@ -28,7 +28,7 @@ type ArrayTask = Omit<QueueItem, 'schema'> & { schema: any[] };
 type ObjectTask = Omit<QueueItem, 'schema'> & { schema: {} };
 
 export function assocPath<V, T>(valuePath: (string | number)[], value: V, obj: T): T | V {
-  if (valuePath.length === 0) {
+  if (typeof obj !== 'object' || valuePath.length === 0) {
     return value;
   }
 
@@ -192,11 +192,7 @@ export default function reformat(s: SchemaTypes, obj: any) {
 
     if (value === undefined) continue;
 
-    if (typeof obj !== 'object' && current.path.length === 0) {
-      obj = value;
-    } else {
-      assocPath(current.path, value, obj);
-    }
+    obj = assocPath(current.path, value, obj);
   }
 
   while (queue.transformQueue.length > 0) {
@@ -205,7 +201,7 @@ export default function reformat(s: SchemaTypes, obj: any) {
 
     let value = viewPath(current.path, obj);
     value = current.transform(value, obj);
-    assocPath(current.path, value, obj);
+    obj = assocPath(current.path, value, obj);
   }
 
   while (queue.renameQueue.length > 0) {
@@ -214,7 +210,7 @@ export default function reformat(s: SchemaTypes, obj: any) {
 
     let value = viewPath(current.path, obj);
     value = current.transform(value, obj);
-    assocPath(current.path, value, obj);
+    obj = assocPath(current.path, value, obj);
   }
 
   return obj;
