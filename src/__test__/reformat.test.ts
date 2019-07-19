@@ -188,6 +188,21 @@ describe('reformat', () => {
       )
     ).toEqual([1, 2, 3]);
   });
+
+  test('should skip undefined value', () => {
+    expect(
+      reformat(
+        {
+          a: {
+            b: Number,
+          },
+        },
+        {
+          a: null,
+        }
+      )
+    ).toEqual({ a: null });
+  });
 });
 
 describe('assocPath', () => {

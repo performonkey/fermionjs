@@ -128,8 +128,11 @@ function objectParser(current: ObjectTask, queue: Queue) {
     }
   } else {
     Object.keys(current.schema).forEach(k => {
+      if (!current.value) return;
+
       const value = current.value[k];
-      if (!value === undefined) return;
+      if (value === undefined) return;
+
       queue.typeQueue.push({
         value,
         path: current.path.concat(k),
